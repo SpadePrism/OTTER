@@ -69,6 +69,13 @@ int main() {
 		float     lightLinearFalloff = 0.09f;
 		float     lightQuadraticFalloff = 0.032f;
 
+		//Toggle Variables
+		bool noneTog = false;
+		bool ambTog = false;
+		bool specTog = false;
+		bool bothTog = true;
+		bool customTog = false;
+
 		// These are our application / scene level uniforms that don't necessarily update
 		// every frame
 		shader->SetUniform("u_LightPos", lightPos);
@@ -81,38 +88,92 @@ int main() {
 		shader->SetUniform("u_LightAttenuationLinear", lightLinearFalloff);
 		shader->SetUniform("u_LightAttenuationQuadratic", lightQuadraticFalloff);
 
+		//Toggle Uniforms
+		shader->SetUniform("u_noneToggle", (int)noneTog);
+		shader->SetUniform("u_ambientToggle", (int)ambTog);
+		shader->SetUniform("u_specularToggle", (int)specTog);
+		shader->SetUniform("u_ambspecToggle", (int)bothTog);
+		shader->SetUniform("u_customToggle", (int)customTog);
+		
 		// We'll add some ImGui controls to control our shader
 		BackendHandler::imGuiCallbacks.push_back([&]() {
-			if (ImGui::CollapsingHeader("Scene Level Lighting Settings"))
+			//if (ImGui::CollapsingHeader("Scene Level Lighting Settings"))
+			//{
+			//	if (ImGui::ColorPicker3("Ambient Color", glm::value_ptr(ambientCol))) {
+			//		shader->SetUniform("u_AmbientCol", ambientCol);
+			//	}
+			//	if (ImGui::SliderFloat("Fixed Ambient Power", &ambientPow, 0.01f, 1.0f)) {
+			//		shader->SetUniform("u_AmbientStrength", ambientPow);
+			//	}
+			//}
+			//if (ImGui::CollapsingHeader("Light Level Lighting Settings"))
+			//{
+			//	if (ImGui::DragFloat3("Light Pos", glm::value_ptr(lightPos), 0.01f, -10.0f, 10.0f)) {
+			//		shader->SetUniform("u_LightPos", lightPos);
+			//	}
+			//	if (ImGui::ColorPicker3("Light Col", glm::value_ptr(lightCol))) {
+			//		shader->SetUniform("u_LightCol", lightCol);
+			//	}
+			//	if (ImGui::SliderFloat("Light Ambient Power", &lightAmbientPow, 0.0f, 1.0f)) {
+			//		shader->SetUniform("u_AmbientLightStrength", lightAmbientPow);
+			//	}
+			//	if (ImGui::SliderFloat("Light Specular Power", &lightSpecularPow, 0.0f, 1.0f)) {
+			//		shader->SetUniform("u_SpecularLightStrength", lightSpecularPow);
+			//	}
+			//	if (ImGui::DragFloat("Light Linear Falloff", &lightLinearFalloff, 0.01f, 0.0f, 1.0f)) {
+			//		shader->SetUniform("u_LightAttenuationLinear", lightLinearFalloff);
+			//	}
+			//	if (ImGui::DragFloat("Light Quadratic Falloff", &lightQuadraticFalloff, 0.01f, 0.0f, 1.0f)) {
+			//		shader->SetUniform("u_LightAttenuationQuadratic", lightQuadraticFalloff);
+			//	}
+			//}
+			
+			if (ImGui::Checkbox("No Lighting", &noneTog))
 			{
-				if (ImGui::ColorPicker3("Ambient Color", glm::value_ptr(ambientCol))) {
-					shader->SetUniform("u_AmbientCol", ambientCol);
-				}
-				if (ImGui::SliderFloat("Fixed Ambient Power", &ambientPow, 0.01f, 1.0f)) {
-					shader->SetUniform("u_AmbientStrength", ambientPow);
-				}
+				noneTog = true;
+				ambTog = false;
+				specTog = false;
+				bothTog = false;
+				customTog = false;
 			}
-			if (ImGui::CollapsingHeader("Light Level Lighting Settings"))
+			if (ImGui::Checkbox("Ambient Only", &ambTog))
 			{
-				if (ImGui::DragFloat3("Light Pos", glm::value_ptr(lightPos), 0.01f, -10.0f, 10.0f)) {
-					shader->SetUniform("u_LightPos", lightPos);
-				}
-				if (ImGui::ColorPicker3("Light Col", glm::value_ptr(lightCol))) {
-					shader->SetUniform("u_LightCol", lightCol);
-				}
-				if (ImGui::SliderFloat("Light Ambient Power", &lightAmbientPow, 0.0f, 1.0f)) {
-					shader->SetUniform("u_AmbientLightStrength", lightAmbientPow);
-				}
-				if (ImGui::SliderFloat("Light Specular Power", &lightSpecularPow, 0.0f, 1.0f)) {
-					shader->SetUniform("u_SpecularLightStrength", lightSpecularPow);
-				}
-				if (ImGui::DragFloat("Light Linear Falloff", &lightLinearFalloff, 0.01f, 0.0f, 1.0f)) {
-					shader->SetUniform("u_LightAttenuationLinear", lightLinearFalloff);
-				}
-				if (ImGui::DragFloat("Light Quadratic Falloff", &lightQuadraticFalloff, 0.01f, 0.0f, 1.0f)) {
-					shader->SetUniform("u_LightAttenuationQuadratic", lightQuadraticFalloff);
-				}
+				noneTog = false;
+				ambTog = true;
+				specTog = false;
+				bothTog = false;
+				customTog = false;
 			}
+			if (ImGui::Checkbox("Specular Only", &specTog))
+			{
+				noneTog = false;
+				ambTog = false;
+				specTog = true;
+				bothTog = false;
+				customTog = false;
+			}
+			if (ImGui::Checkbox("Ambient, Specular, and Diffuse", &bothTog))
+			{
+				noneTog = false;
+				ambTog = false;
+				specTog = false;
+				bothTog = true;
+				customTog = false;
+			}
+			if (ImGui::Checkbox("Custom - Toon Lighting", &customTog))
+			{
+				noneTog = false;
+				ambTog = false;
+				specTog = false;
+				bothTog = false;
+				customTog = true;
+			}
+
+			shader->SetUniform("u_noneToggle", (int)noneTog);
+			shader->SetUniform("u_ambientToggle", (int)ambTog);
+			shader->SetUniform("u_specularToggle", (int)specTog);
+			shader->SetUniform("u_ambspecToggle", (int)bothTog);
+			shader->SetUniform("u_customToggle", (int)customTog);
 
 			auto name = controllables[selectedVao].get<GameObjectTag>().Name;
 			ImGui::Text(name.c_str());
@@ -145,11 +206,13 @@ int main() {
 		// Load some textures from files
 		Texture2D::sptr stone = Texture2D::LoadFromFile("images/Stone_001_Diffuse.png");
 		Texture2D::sptr stoneSpec = Texture2D::LoadFromFile("images/Stone_001_Specular.png");
+		Texture2D::sptr stone2 = Texture2D::LoadFromFile("images/stone.jpg");
 		Texture2D::sptr grass = Texture2D::LoadFromFile("images/grass.jpg");
 		Texture2D::sptr noSpec = Texture2D::LoadFromFile("images/grassSpec.png");
 		Texture2D::sptr box = Texture2D::LoadFromFile("images/box.bmp");
 		Texture2D::sptr boxSpec = Texture2D::LoadFromFile("images/box-reflections.bmp");
 		Texture2D::sptr simpleFlora = Texture2D::LoadFromFile("images/SimpleFlora.png");
+		Texture2D::sptr zombie = Texture2D::LoadFromFile("images/ZomTex.png");
 
 		// Load the cube map
 		//TextureCubeMap::sptr environmentMap = TextureCubeMap::LoadFromImages("images/cubemaps/skybox/sample.jpg");
@@ -190,6 +253,13 @@ int main() {
 		stoneMat->Set("u_Shininess", 2.0f);
 		stoneMat->Set("u_TextureMix", 0.0f); 
 
+		ShaderMaterial::sptr stoneMat2 = ShaderMaterial::Create();
+		stoneMat2->Shader = shader;
+		stoneMat2->Set("s_Diffuse", stone2);
+		stoneMat2->Set("s_Specular", stoneSpec);
+		stoneMat2->Set("u_Shininess", 2.0f);
+		stoneMat2->Set("u_TextureMix", 0.0f);
+
 		ShaderMaterial::sptr grassMat = ShaderMaterial::Create();
 		grassMat->Shader = shader;
 		grassMat->Set("s_Diffuse", grass);
@@ -211,54 +281,65 @@ int main() {
 		simpleFloraMat->Set("u_Shininess", 8.0f);
 		simpleFloraMat->Set("u_TextureMix", 0.0f);
 
+		ShaderMaterial::sptr zomMat = ShaderMaterial::Create();
+		zomMat->Shader = shader;
+		zomMat->Set("s_Diffuse", zombie);
+		zomMat->Set("s_Specular", noSpec);
+		zomMat->Set("u_Shininess", 2.0f);
+		zomMat->Set("u_TextureMix", 0.0f);
+
 		GameObject obj1 = scene->CreateEntity("Ground"); 
 		{
 			VertexArrayObject::sptr vao = ObjLoader::LoadFromFile("models/plane.obj");
 			obj1.emplace<RendererComponent>().SetMesh(vao).SetMaterial(grassMat);
 		}
 
-		GameObject obj2 = scene->CreateEntity("monkey_quads");
+		GameObject obj2 = scene->CreateEntity("Zombie");
 		{
-			VertexArrayObject::sptr vao = ObjLoader::LoadFromFile("models/monkey_quads.obj");
-			obj2.emplace<RendererComponent>().SetMesh(vao).SetMaterial(stoneMat);
-			obj2.get<Transform>().SetLocalPosition(0.0f, 0.0f, 2.0f);
-			obj2.get<Transform>().SetLocalRotation(0.0f, 0.0f, -90.0f);
+			VertexArrayObject::sptr vao = ObjLoader::LoadFromFile("models/ZombieBase.obj");
+			obj2.emplace<RendererComponent>().SetMesh(vao).SetMaterial(zomMat);
+			obj2.get<Transform>().SetLocalPosition(0.0f, 0.0f, 0.0f);
+			obj2.get<Transform>().SetLocalRotation(90.0f, 0.0f, -90.0f);
+			obj2.get<Transform>().SetLocalScale(0.5f, 0.5f, 0.5f);
 			BehaviourBinding::BindDisabled<SimpleMoveBehaviour>(obj2);
 		}
-
+		
 		std::vector<GameObject> randomTrees;
 		{
-			VertexArrayObject::sptr vao = ObjLoader::LoadFromFile("models/simplePine.obj");
+			VertexArrayObject::sptr vao = ObjLoader::LoadFromFile("models/deadTree.obj");
 			for (int i = 0; i < NUM_TREES/2; i++)
 			{
-				randomTrees.push_back(scene->CreateEntity("simplePine" + (std::to_string(i + 1))));
-				randomTrees[i].emplace<RendererComponent>().SetMesh(vao).SetMaterial(simpleFloraMat);
+				randomTrees.push_back(scene->CreateEntity("deadTree" + (std::to_string(i + 1))));
+				randomTrees[i].emplace<RendererComponent>().SetMesh(vao).SetMaterial(stoneMat);
 				//Randomly places
 				randomTrees[i].get<Transform>().SetLocalPosition(glm::vec3(Util::GetRandomNumberBetween(glm::vec2(-PLANE_X, -PLANE_Y), glm::vec2(PLANE_X, PLANE_Y), glm::vec2(-DNS_X, -DNS_Y), glm::vec2(DNS_X, DNS_Y)), 0.0f));
+				randomTrees[i].get<Transform>().SetLocalRotation(90.0f, 0.0f, 0.0f);
+				randomTrees[i].get<Transform>().SetLocalScale(0.5f, 0.5f, 0.5f);
 			}
 		}
-
-		std::vector<GameObject> randomTrees2;
-		{
-			VertexArrayObject::sptr vao = ObjLoader::LoadFromFile("models/simpleTree.obj");
-			for (int i = 0; i < NUM_TREES/2; i++)
-			{
-				randomTrees2.push_back(scene->CreateEntity("simpleTree" + (std::to_string(i + 1))));
-				randomTrees2[i].emplace<RendererComponent>().SetMesh(vao).SetMaterial(simpleFloraMat);
-				//Randomly places
-				randomTrees2[i].get<Transform>().SetLocalPosition(glm::vec3(Util::GetRandomNumberBetween(glm::vec2(-PLANE_X, -PLANE_Y), glm::vec2(PLANE_X, PLANE_Y), glm::vec2(-DNS_X, -DNS_Y), glm::vec2(DNS_X, DNS_Y)), 0.0f));
-			}
-		}
-
+		
+		//std::vector<GameObject> randomTrees2;
+		//{
+		//	VertexArrayObject::sptr vao = ObjLoader::LoadFromFile("models/deadTree2.obj");
+		//	for (int i = 0; i < NUM_TREES/2; i++)
+		//	{
+		//		randomTrees2.push_back(scene->CreateEntity("deadTree2" + (std::to_string(i + 1))));
+		//		randomTrees2[i].emplace<RendererComponent>().SetMesh(vao).SetMaterial(simpleFloraMat);
+		//		//Randomly places
+		//		randomTrees2[i].get<Transform>().SetLocalPosition(glm::vec3(Util::GetRandomNumberBetween(glm::vec2(-PLANE_X, -PLANE_Y), glm::vec2(PLANE_X, PLANE_Y), glm::vec2(-DNS_X, -DNS_Y), glm::vec2(DNS_X, DNS_Y)), 0.0f));
+		//	}
+		//}
+		
 		std::vector<GameObject> randomRocks;
 		{
-			VertexArrayObject::sptr vao = ObjLoader::LoadFromFile("models/simpleRock.obj");
+			VertexArrayObject::sptr vao = ObjLoader::LoadFromFile("models/roundedGrave.obj");
 			for (int i = 0; i < NUM_ROCKS; i++)
 			{
-				randomRocks.push_back(scene->CreateEntity("simpleRock" + (std::to_string(i + 1))));
-				randomRocks[i].emplace<RendererComponent>().SetMesh(vao).SetMaterial(simpleFloraMat);
+				randomRocks.push_back(scene->CreateEntity("roundedGrave" + (std::to_string(i + 1))));
+				randomRocks[i].emplace<RendererComponent>().SetMesh(vao).SetMaterial(stoneMat2);
 				//Randomly places
 				randomRocks[i].get<Transform>().SetLocalPosition(glm::vec3(Util::GetRandomNumberBetween(glm::vec2(-PLANE_X, -PLANE_Y), glm::vec2(PLANE_X, PLANE_Y), glm::vec2(-DNS_X, -DNS_Y), glm::vec2(DNS_X, DNS_Y)), 0.0f));
+				randomRocks[i].get<Transform>().SetLocalRotation(90.0f, 0.0f, 90.0f);
 			}
 		}
 
