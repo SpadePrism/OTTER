@@ -5,6 +5,13 @@ layout(location = 1) in vec3 inColor;
 layout(location = 2) in vec3 inNormal;
 layout(location = 3) in vec2 inUV;
 
+// Toggle Uniforms //
+uniform bool u_noneToggle;
+uniform bool u_ambientToggle;
+uniform bool u_specularToggle;
+uniform bool u_ambspecToggle;
+uniform bool u_customToggle;
+
 uniform sampler2D s_Diffuse;
 uniform sampler2D s_Diffuse2;
 uniform sampler2D s_Specular;
@@ -28,6 +35,10 @@ uniform float u_TextureMix;
 uniform vec3  u_CamPos;
 
 out vec4 frag_color;
+
+// Toon Shading //
+const int bands = 5;
+const float scaleFactor = 1.0/bands;
 
 // https://learnopengl.com/Advanced-Lighting/Advanced-Lighting
 void main() {
@@ -62,10 +73,47 @@ void main() {
 	vec4 textureColor2 = texture(s_Diffuse2, inUV);
 	vec4 textureColor = mix(textureColor1, textureColor2, u_TextureMix);
 
-	vec3 result = (
-		(u_AmbientCol * u_AmbientStrength) + // global ambient light
-		(ambient + diffuse + specular) * attenuation // light factors from our single light
-		) * inColor * textureColor.rgb; // Object color
+	// Toon Shading - Outline Effect
+	float edge = (dot(viewDir, N) < 0.4) ? 0.0 : 1.0;
+
+	vec3 result;
+
+	// if toggles //
+
+	// No Lighting //
+	if (u_noneToggle == true)
+	{
+		result = inColor * textureColor.rgb;
+	}
+	
+	// Ambient Only //
+	if (u_ambientToggle == true)
+	{
+		result = ((u_AmbientCol * u_AmbientStrength) + (ambient * attenuation)) * inColor * textureColor.rgb;
+	}
+	
+	// Specular Only //
+	if (u_specularToggle == true)
+	{
+		result = ((specular) * attenuation) * inColor * textureColor.rgb;
+	}
+	
+	// Ambient and Specular (Include Diffuse) //
+	if (u_ambspecToggle == true)
+	{
+		result = (
+			(u_AmbientCol * u_AmbientStrength) + // global ambient light
+			(ambient + diffuse + specular) * attenuation // light factors from our single light
+			) * inColor * textureColor.rgb; // Object color
+	}
+	
+	// Custom - Toon Lighting //
+	if (u_customToggle == true)
+	{
+		diffuse = floor(diffuse * bands) * scaleFactor;
+	
+		result = (u_AmbientCol * u_AmbientStrength) + (ambient + diffuse + specular) * edge * inColor * textureColor.rgb;
+	}
 
 	frag_color = vec4(result, textureColor.a);
 }

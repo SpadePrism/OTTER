@@ -65,6 +65,13 @@ int main() {
 		float     lightLinearFalloff = 0.09f;
 		float     lightQuadraticFalloff = 0.032f;
 
+		//Toggle Variables
+		bool noneTog = false;
+		bool ambTog = false;
+		bool specTog = false;
+		bool bothTog = true;
+		bool customTog = false;
+
 		// These are our application / scene level uniforms that don't necessarily update
 		// every frame
 		shader->SetUniform("u_LightPos", lightPos);
@@ -85,6 +92,7 @@ int main() {
 		SepiaEffect* sepiaEffect;
 		GreyscaleEffect* greyscaleEffect;
 		ColorCorrectEffect* colorCorrectEffect;
+		BloomEffect* bloomEffect;
 		
 
 		// We'll add some ImGui controls to control our shader
@@ -130,14 +138,31 @@ int main() {
 						temp->SetLUT(LUT3D(std::string(input)));
 					}
 				}
-			}
-			if (ImGui::CollapsingHeader("Environment generation"))
-			{
-				if (ImGui::Button("Regenerate Environment", ImVec2(200.0f, 40.0f)))
+				if (activeEffect == 3)
 				{
-					EnvironmentGenerator::RegenerateEnvironment();
+					ImGui::Text("Active Effect: Bloom Effect");
+
+					BloomEffect* temp = (BloomEffect*)effects[activeEffect];
+					float threshold = temp->GetThreshold();
+					float passes	= temp->GetPasses();
+
+					if (ImGui::SliderFloat("Threshold", &threshold, 0.0f, 1.0f))
+					{
+						temp->SetThreshold(threshold);
+					}
+					if (ImGui::SliderFloat("Passes", &passes, 0.0f, 10.0f))
+					{
+						temp->SetPasses(passes);
+					}
 				}
 			}
+			//if (ImGui::CollapsingHeader("Environment generation"))
+			//{
+			//	if (ImGui::Button("Regenerate Environment", ImVec2(200.0f, 40.0f)))
+			//	{
+			//		EnvironmentGenerator::RegenerateEnvironment();
+			//	}
+			//}
 			if (ImGui::CollapsingHeader("Scene Level Lighting Settings"))
 			{
 				if (ImGui::ColorPicker3("Ambient Color", glm::value_ptr(ambientCol))) {
@@ -147,27 +172,77 @@ int main() {
 					shader->SetUniform("u_AmbientStrength", ambientPow);
 				}
 			}
-			if (ImGui::CollapsingHeader("Light Level Lighting Settings"))
+			//if (ImGui::CollapsingHeader("Light Level Lighting Settings"))
+			//{
+			//	if (ImGui::DragFloat3("Light Pos", glm::value_ptr(lightPos), 0.01f, -10.0f, 10.0f)) {
+			//		shader->SetUniform("u_LightPos", lightPos);
+			//	}
+			//	if (ImGui::ColorPicker3("Light Col", glm::value_ptr(lightCol))) {
+			//		shader->SetUniform("u_LightCol", lightCol);
+			//	}
+			//	if (ImGui::SliderFloat("Light Ambient Power", &lightAmbientPow, 0.0f, 1.0f)) {
+			//		shader->SetUniform("u_AmbientLightStrength", lightAmbientPow);
+			//	}
+			//	if (ImGui::SliderFloat("Light Specular Power", &lightSpecularPow, 0.0f, 1.0f)) {
+			//		shader->SetUniform("u_SpecularLightStrength", lightSpecularPow);
+			//	}
+			//	if (ImGui::DragFloat("Light Linear Falloff", &lightLinearFalloff, 0.01f, 0.0f, 1.0f)) {
+			//		shader->SetUniform("u_LightAttenuationLinear", lightLinearFalloff);
+			//	}
+			//	if (ImGui::DragFloat("Light Quadratic Falloff", &lightQuadraticFalloff, 0.01f, 0.0f, 1.0f)) {
+			//		shader->SetUniform("u_LightAttenuationQuadratic", lightQuadraticFalloff);
+			//	}
+			//}
+			if (ImGui::CollapsingHeader("Lighting Toggles"))
 			{
-				if (ImGui::DragFloat3("Light Pos", glm::value_ptr(lightPos), 0.01f, -10.0f, 10.0f)) {
-					shader->SetUniform("u_LightPos", lightPos);
+				if (ImGui::Checkbox("No Lighting", &noneTog))
+				{
+					noneTog = true;
+					ambTog = false;
+					specTog = false;
+					bothTog = false;
+					customTog = false;
 				}
-				if (ImGui::ColorPicker3("Light Col", glm::value_ptr(lightCol))) {
-					shader->SetUniform("u_LightCol", lightCol);
+				if (ImGui::Checkbox("Ambient Only", &ambTog))
+				{
+					noneTog = false;
+					ambTog = true;
+					specTog = false;
+					bothTog = false;
+					customTog = false;
 				}
-				if (ImGui::SliderFloat("Light Ambient Power", &lightAmbientPow, 0.0f, 1.0f)) {
-					shader->SetUniform("u_AmbientLightStrength", lightAmbientPow);
+				if (ImGui::Checkbox("Specular Only", &specTog))
+				{
+					noneTog = false;
+					ambTog = false;
+					specTog = true;
+					bothTog = false;
+					customTog = false;
 				}
-				if (ImGui::SliderFloat("Light Specular Power", &lightSpecularPow, 0.0f, 1.0f)) {
-					shader->SetUniform("u_SpecularLightStrength", lightSpecularPow);
+				if (ImGui::Checkbox("Ambient, Specular, and Diffuse", &bothTog))
+				{
+					noneTog = false;
+					ambTog = false;
+					specTog = false;
+					bothTog = true;
+					customTog = false;
 				}
-				if (ImGui::DragFloat("Light Linear Falloff", &lightLinearFalloff, 0.01f, 0.0f, 1.0f)) {
-					shader->SetUniform("u_LightAttenuationLinear", lightLinearFalloff);
-				}
-				if (ImGui::DragFloat("Light Quadratic Falloff", &lightQuadraticFalloff, 0.01f, 0.0f, 1.0f)) {
-					shader->SetUniform("u_LightAttenuationQuadratic", lightQuadraticFalloff);
+				if (ImGui::Checkbox("Custom - Toon Lighting", &customTog))
+				{
+					noneTog = false;
+					ambTog = false;
+					specTog = false;
+					bothTog = false;
+					customTog = true;
 				}
 			}
+
+			// Toggle Uniforms
+			shader->SetUniform("u_noneToggle", (int)noneTog);
+			shader->SetUniform("u_ambientToggle", (int)ambTog);
+			shader->SetUniform("u_specularToggle", (int)specTog);
+			shader->SetUniform("u_ambspecToggle", (int)bothTog);
+			shader->SetUniform("u_customToggle", (int)customTog);
 
 			auto name = controllables[selectedVao].get<GameObjectTag>().Name;
 			ImGui::Text(name.c_str());
@@ -205,6 +280,10 @@ int main() {
 		Texture2D::sptr box = Texture2D::LoadFromFile("images/box.bmp");
 		Texture2D::sptr boxSpec = Texture2D::LoadFromFile("images/box-reflections.bmp");
 		Texture2D::sptr simpleFlora = Texture2D::LoadFromFile("images/SimpleFlora.png");
+		Texture2D::sptr space1 = Texture2D::LoadFromFile("images/DioramaTexture.png");
+		Texture2D::sptr space1spec = Texture2D::LoadFromFile("images/DioramaTextureSpec.png");
+		Texture2D::sptr space2 = Texture2D::LoadFromFile("images/DioramaTexture2.png");
+		Texture2D::sptr space2spec = Texture2D::LoadFromFile("images/DioramaTexture2Spec.png");
 		LUT3D testCube("cubes/BrightenedCorrection.cube");
 
 		// Load the cube map
@@ -267,38 +346,70 @@ int main() {
 		simpleFloraMat->Set("u_Shininess", 8.0f);
 		simpleFloraMat->Set("u_TextureMix", 0.0f);
 
-		GameObject obj1 = scene->CreateEntity("Ground"); 
+		ShaderMaterial::sptr space1Mat = ShaderMaterial::Create();
+		space1Mat->Shader = shader;
+		space1Mat->Set("s_Diffuse", space1);
+		space1Mat->Set("s_Specular", space1spec);
+		space1Mat->Set("u_Shininess", 8.0f);
+		space1Mat->Set("u_TextureMix", 0.0f);
+
+		ShaderMaterial::sptr space2Mat = ShaderMaterial::Create();
+		space2Mat->Shader = shader;
+		space2Mat->Set("s_Diffuse", space2);
+		space2Mat->Set("s_Specular", space2spec);
+		space2Mat->Set("u_Shininess", 8.0f);
+		space2Mat->Set("u_TextureMix", 0.0f);
+
+		GameObject obj1 = scene->CreateEntity("Diorama Planets");
 		{
-			VertexArrayObject::sptr vao = ObjLoader::LoadFromFile("models/plane.obj");
-			obj1.emplace<RendererComponent>().SetMesh(vao).SetMaterial(grassMat);
+			VertexArrayObject::sptr vao = ObjLoader::LoadFromFile("models/DioramaPlanets.obj");
+			obj1.emplace<RendererComponent>().SetMesh(vao).SetMaterial(space1Mat);
+			obj1.get<Transform>().SetLocalPosition(0.0f, 0.0f, 2.0f);
+			obj1.get<Transform>().SetLocalRotation(90.0f, 0.0f, -90.0f);
+			BehaviourBinding::BindDisabled<SimpleMoveBehaviour>(obj1);
 		}
 
-		GameObject obj2 = scene->CreateEntity("monkey_quads");
+		GameObject obj2 = scene->CreateEntity("Diorama Space");
 		{
-			VertexArrayObject::sptr vao = ObjLoader::LoadFromFile("models/monkey_quads.obj");
-			obj2.emplace<RendererComponent>().SetMesh(vao).SetMaterial(stoneMat);
+			VertexArrayObject::sptr vao = ObjLoader::LoadFromFile("models/DioramaSpace.obj");
+			obj2.emplace<RendererComponent>().SetMesh(vao).SetMaterial(space2Mat);
 			obj2.get<Transform>().SetLocalPosition(0.0f, 0.0f, 2.0f);
-			obj2.get<Transform>().SetLocalRotation(0.0f, 0.0f, -90.0f);
+			obj2.get<Transform>().SetLocalRotation(90.0f, 0.0f, -90.0f);
 			BehaviourBinding::BindDisabled<SimpleMoveBehaviour>(obj2);
 		}
 
-		std::vector<glm::vec2> allAvoidAreasFrom = { glm::vec2(-4.0f, -4.0f) };
-		std::vector<glm::vec2> allAvoidAreasTo = { glm::vec2(4.0f, 4.0f) };
-
-		std::vector<glm::vec2> rockAvoidAreasFrom = { glm::vec2(-3.0f, -3.0f), glm::vec2(-19.0f, -19.0f), glm::vec2(5.0f, -19.0f),
-														glm::vec2(-19.0f, 5.0f), glm::vec2(-19.0f, -19.0f) };
-		std::vector<glm::vec2> rockAvoidAreasTo = { glm::vec2(3.0f, 3.0f), glm::vec2(19.0f, -5.0f), glm::vec2(19.0f, 19.0f),
-														glm::vec2(19.0f, 19.0f), glm::vec2(-5.0f, 19.0f) };
-		glm::vec2 spawnFromHere = glm::vec2(-19.0f, -19.0f);
-		glm::vec2 spawnToHere = glm::vec2(19.0f, 19.0f);
-
-		EnvironmentGenerator::AddObjectToGeneration("models/simplePine.obj", simpleFloraMat, 150,
-			spawnFromHere, spawnToHere, allAvoidAreasFrom, allAvoidAreasTo);
-		EnvironmentGenerator::AddObjectToGeneration("models/simpleTree.obj", simpleFloraMat, 150,
-			spawnFromHere, spawnToHere, allAvoidAreasFrom, allAvoidAreasTo);
-		EnvironmentGenerator::AddObjectToGeneration("models/simpleRock.obj", simpleFloraMat, 40,
-			spawnFromHere, spawnToHere, rockAvoidAreasFrom, rockAvoidAreasTo);
-		EnvironmentGenerator::GenerateEnvironment();
+		//GameObject obj1 = scene->CreateEntity("Ground"); 
+		//{
+		//	VertexArrayObject::sptr vao = ObjLoader::LoadFromFile("models/plane.obj");
+		//	obj1.emplace<RendererComponent>().SetMesh(vao).SetMaterial(grassMat);
+		//}
+		//
+		//GameObject obj2 = scene->CreateEntity("monkey_quads");
+		//{
+		//	VertexArrayObject::sptr vao = ObjLoader::LoadFromFile("models/monkey_quads.obj");
+		//	obj2.emplace<RendererComponent>().SetMesh(vao).SetMaterial(stoneMat);
+		//	obj2.get<Transform>().SetLocalPosition(0.0f, 0.0f, 2.0f);
+		//	obj2.get<Transform>().SetLocalRotation(0.0f, 0.0f, -90.0f);
+		//	BehaviourBinding::BindDisabled<SimpleMoveBehaviour>(obj2);
+		//}
+		//
+		//std::vector<glm::vec2> allAvoidAreasFrom = { glm::vec2(-4.0f, -4.0f) };
+		//std::vector<glm::vec2> allAvoidAreasTo = { glm::vec2(4.0f, 4.0f) };
+		//
+		//std::vector<glm::vec2> rockAvoidAreasFrom = { glm::vec2(-3.0f, -3.0f), glm::vec2(-19.0f, -19.0f), glm::vec2(5.0f, -19.0f),
+		//												glm::vec2(-19.0f, 5.0f), glm::vec2(-19.0f, -19.0f) };
+		//std::vector<glm::vec2> rockAvoidAreasTo = { glm::vec2(3.0f, 3.0f), glm::vec2(19.0f, -5.0f), glm::vec2(19.0f, 19.0f),
+		//												glm::vec2(19.0f, 19.0f), glm::vec2(-5.0f, 19.0f) };
+		//glm::vec2 spawnFromHere = glm::vec2(-19.0f, -19.0f);
+		//glm::vec2 spawnToHere = glm::vec2(19.0f, 19.0f);
+		//
+		//EnvironmentGenerator::AddObjectToGeneration("models/simplePine.obj", simpleFloraMat, 150,
+		//	spawnFromHere, spawnToHere, allAvoidAreasFrom, allAvoidAreasTo);
+		//EnvironmentGenerator::AddObjectToGeneration("models/simpleTree.obj", simpleFloraMat, 150,
+		//	spawnFromHere, spawnToHere, allAvoidAreasFrom, allAvoidAreasTo);
+		//EnvironmentGenerator::AddObjectToGeneration("models/simpleRock.obj", simpleFloraMat, 40,
+		//	spawnFromHere, spawnToHere, rockAvoidAreasFrom, rockAvoidAreasTo);
+		//EnvironmentGenerator::GenerateEnvironment();
 
 		// Create an object to be our camera
 		GameObject cameraObject = scene->CreateEntity("Camera");
@@ -338,12 +449,19 @@ int main() {
 		}
 		effects.push_back(greyscaleEffect);
 		
-		GameObject colorCorrectEffectObject = scene->CreateEntity("Greyscale Effect");
+		GameObject colorCorrectEffectObject = scene->CreateEntity("Color Correct Effect");
 		{
 			colorCorrectEffect = &colorCorrectEffectObject.emplace<ColorCorrectEffect>();
 			colorCorrectEffect->Init(width, height);
 		}
 		effects.push_back(colorCorrectEffect);
+
+		GameObject bloomEffectObject = scene->CreateEntity("Bloom Effect");
+		{
+			bloomEffect = &bloomEffectObject.emplace<BloomEffect>();
+			bloomEffect->Init(width, height);
+		}
+		effects.push_back(bloomEffect);
 
 		#pragma endregion 
 		//////////////////////////////////////////////////////////////////////////////////////////
